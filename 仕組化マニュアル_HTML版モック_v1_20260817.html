@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>仕組み構築 完全マニュアル【基礎編】｜モック v1</title>
+<style>
+:root{
+  --navy:#182449;
+  --royal:#2b3a8c;
+  --gold:#c9a227;
+  --gold-light:#e3c96b;
+  --orange:#e0651a;
+  --cream:#fdf6e0;
+  --blue-head:#2b3990;
+  --ink:#2a2a2a;
+  --paper:#ffffff;
+  --bg:#eceae4;
+  --hh:44px;
+  --nh:62px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic","Noto Sans JP",Meiryo,system-ui,sans-serif;
+  color:var(--ink);background:var(--bg);
+  -webkit-text-size-adjust:100%;
+  overscroll-behavior:none;
+}
+[hidden]{display:none!important}
+
+/* ---- ヘッダー ---- */
+#topbar{
+  position:fixed;top:0;left:0;right:0;height:var(--hh);z-index:20;
+  background:var(--navy);color:#fff;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 12px;padding-top:env(safe-area-inset-top);
+}
+#topbar .ttl{
+  font-size:12px;letter-spacing:.04em;opacity:.92;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+#topbar .ttl em{font-style:normal;color:var(--gold-light);margin-left:.5em;font-size:11px;border:1px solid var(--gold);border-radius:3px;padding:0 4px}
+#layoutToggle{
+  display:none;
+  font:inherit;font-size:12px;color:#fff;background:transparent;
+  border:1px solid rgba(255,255,255,.55);border-radius:14px;
+  padding:4px 12px;cursor:pointer;flex-shrink:0;margin-left:12px;
+}
+#layoutToggle:hover{border-color:#fff}
+#pbar{position:absolute;left:0;bottom:0;height:2px;width:100%;background:rgba(255,255,255,.14)}
+#pbar i{display:block;height:100%;width:0;background:var(--gold);transition:width .2s}
+
+/* ---- 本文スクロール領域 ---- */
+#book{
+  position:fixed;left:0;right:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  top:calc(var(--hh) + env(safe-area-inset-top));
+  bottom:calc(var(--nh) + env(safe-area-inset-bottom));
+  background:var(--bg);
+}
+
+/* ---- ページ共通 ---- */
+.page{
+  background:var(--paper);
+  min-height:calc(100vh - var(--hh) - var(--nh));
+  min-height:calc(100dvh - var(--hh) - var(--nh) - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  padding:26px 22px 40px;
+  max-width:680px;margin:0 auto;
+  font-size:17px;line-height:1.95;letter-spacing:.02em;
+}
+.page p{margin:0 0 1.15em}
+.page .tight p{margin-bottom:.35em}
+b,strong{font-weight:700}
+.em{color:var(--orange);font-weight:700}
+.lead{color:var(--blue-head);font-weight:700;font-size:1.12em;margin-bottom:1em}
+hr.sep{border:none;height:1px;width:56px;background:var(--gold);margin:1.8em auto}
+
+h2.band{
+  background:var(--cream);color:var(--blue-head);
+  border-left:6px solid var(--blue-head);
+  font-size:1.12em;line-height:1.6;font-weight:700;
+  padding:10px 14px;margin:0 0 1.1em;border-radius:0 3px 3px 0;
+}
+h3.sub{color:var(--blue-head);font-size:1.04em;margin:1.4em 0 .7em;font-weight:700}
+.page h2.band:first-child{margin-top:2px}
+
+ul.plain{list-style:none;margin:0 0 1.15em}
+ul.plain li{padding-left:1.4em;position:relative;margin-bottom:.4em}
+ul.plain li::before{content:"・";position:absolute;left:.2em;color:var(--ink)}
+ul.check li::before{content:"✓";color:var(--gold);font-weight:700;left:.1em}
+
+figure.ph{margin:1.4em 0}
+.phbox{
+  aspect-ratio:16/9;border-radius:4px;
+  background:repeating-linear-gradient(45deg,#f1eee6,#f1eee6 12px,#eae6db 12px,#eae6db 24px);
+  border:1px dashed #c8c0ad;
+  display:flex;align-items:center;justify-content:center;
+  color:#8d8368;font-size:12.5px;letter-spacing:.05em;text-align:center;padding:8px;
+}
+figure.ph figcaption{font-size:12px;color:#8a8a8a;margin-top:.5em;text-align:center}
+
+/* ---- 色付き特殊ページ（表紙・目次・章扉） ---- */
+.page.dark{color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.page.cover{background:var(--navy);padding:18px}
+.page.royal{background:var(--royal)}
+.cover-frame{
+  border:1px solid var(--gold);flex:1;width:100%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:34px 20px;position:relative;
+}
+.cover-frame::before{content:"";position:absolute;inset:7px;border:1px solid rgba(201,162,39,.55);pointer-events:none}
+.cover-sub{font-weight:700;font-size:1.05em;line-height:1.9;margin-bottom:.9em}
+.gold-rule{width:120px;height:2px;background:var(--gold);margin:14px auto}
+.cover-title{color:var(--gold);font-size:1.7em;font-weight:800;line-height:1.5;margin:.2em 0}
+.cover-hen{font-size:1.05em;letter-spacing:.3em;margin-top:.4em}
+.cover-plane{font-size:52px;color:var(--gold);margin:44px 0;font-weight:400}
+.cover-author{margin-top:44px;font-weight:700;letter-spacing:.15em}
+
+.dv-num{color:var(--gold);font-size:1.5em;font-weight:800;letter-spacing:.2em}
+.dv-title{font-size:1.25em;font-weight:700;margin-top:.6em;letter-spacing:.1em}
+.toc-list{list-style:none;margin-top:1.6em;font-size:1.02em;line-height:2.6}
+.toc-list b{color:var(--gold);font-weight:700;margin-right:1em}
+
+/* ---- 実践者の声 ---- */
+.voice{
+  background:#fdfaf1;border-left:5px solid var(--gold);
+  padding:18px 16px;border-radius:0 4px 4px 0;margin-top:.4em;
+}
+.voice-name{color:var(--blue-head);font-weight:700;font-size:.98em}
+.voice-head{color:var(--orange);font-weight:700;font-size:1.06em;line-height:1.7;margin:.3em 0 1em}
+
+/* ---- CTA ---- */
+.cta-box{
+  background:var(--royal);color:#fff;border:2px solid var(--gold);
+  border-radius:6px;padding:22px 18px;margin:1.6em 0 .4em;text-align:center;
+}
+.cta-rule{width:100%;height:1px;background:var(--gold);margin:10px 0}
+.cta-title{font-weight:800;font-size:1.14em;line-height:1.7;padding:2px 0}
+.cta-title small{display:block;font-size:.75em;font-weight:700;opacity:.95}
+.cta-list{list-style:none;text-align:left;margin:14px auto 4px;max-width:26em;font-size:.98em}
+.cta-list li{padding-left:1.3em;position:relative;margin-bottom:.5em;line-height:1.7}
+.cta-list li::before{content:"●";position:absolute;left:0;top:.1em;color:var(--gold);font-size:.7em}
+.cta-note{font-size:.92em;margin:14px 0 4px;line-height:1.8}
+a.cta-btn{
+  display:block;background:var(--orange);color:#fff;text-decoration:none;
+  font-weight:800;font-size:1.08em;line-height:1.5;
+  border-radius:6px;padding:17px 12px;margin:14px auto 2px;max-width:30em;
+  box-shadow:0 2px 0 rgba(0,0,0,.25);
+}
+a.cta-btn:active{transform:translateY(1px)}
+.mocknote{font-size:11.5px;color:#8a8a8a;margin-top:1.6em;line-height:1.7}
+
+/* ---- 動画ページ ---- */
+.videobox{
+  aspect-ratio:16/9;background:#101318;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;margin:1.2em 0 .7em;
+}
+.playbtn{
+  width:72px;height:72px;border-radius:50%;
+  border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;
+}
+.playbtn::before{
+  content:"";display:block;margin-left:6px;
+  border-style:solid;border-width:14px 0 14px 24px;
+  border-color:transparent transparent transparent var(--gold);
+}
+.vcap{text-align:center;font-size:.95em;color:#555}
+
+/* ---- 署名 ---- */
+.sign{text-align:right;font-weight:700;font-size:1.08em;margin-top:2.2em}
+
+/* ---- モック説明ページ ---- */
+.mockbadge{display:inline-block;background:var(--navy);color:var(--gold-light);border-radius:4px;font-size:12px;padding:3px 10px;letter-spacing:.15em;margin-bottom:14px}
+.mockinfo li{margin-bottom:.7em}
+
+/* ---- 下部ナビ ---- */
+#navbar{
+  position:fixed;left:0;right:0;bottom:0;z-index:20;
+  height:calc(var(--nh) + env(safe-area-inset-bottom));
+  padding:8px 10px calc(8px + env(safe-area-inset-bottom));
+  background:rgba(255,255,255,.96);border-top:1px solid #ddd8cc;
+  display:flex;align-items:center;gap:8px;
+  backdrop-filter:blur(4px);
+}
+#navbar button{
+  font:inherit;font-size:15px;font-weight:700;color:var(--royal);
+  background:#fff;border:1.5px solid var(--royal);border-radius:8px;
+  flex:1;height:44px;cursor:pointer;max-width:200px;
+}
+#navbar button:disabled{color:#b9b9b9;border-color:#d5d5d5;cursor:default}
+#counter{flex:1;text-align:center;font-size:13px;color:#666;letter-spacing:.06em;white-space:nowrap}
+
+/* ---- ページ切替アニメーション ---- */
+@keyframes inNext{from{opacity:.01;transform:translateX(16px)}to{opacity:1;transform:none}}
+@keyframes inPrev{from{opacity:.01;transform:translateX(-16px)}to{opacity:1;transform:none}}
+.page.enter-next{animation:inNext .16s ease-out}
+.page.enter-prev{animation:inPrev .16s ease-out}
+@media (prefers-reduced-motion:reduce){.page.enter-next,.page.enter-prev{animation:none}}
+
+/* ---- タブレット・PC ---- */
+@media (min-width:768px){
+  .page{padding:44px 48px 56px;font-size:17.5px;border-radius:2px}
+  #book{padding:26px 0}
+  .page{box-shadow:0 1px 8px rgba(40,35,20,.13);min-height:72vh}
+}
+@media (min-width:1024px){
+  #layoutToggle{display:inline-block}
+  .page{font-size:18px}
+  /* 見開きモード */
+  body.spread #book{
+    display:grid;grid-template-columns:repeat(2,minmax(0,520px));
+    justify-content:center;align-items:stretch;gap:26px;padding:26px 20px;
+  }
+  body.spread .page{margin:0;max-width:none;width:100%}
+}
+</style>
+</head>
+<body>
+
+<header id="topbar">
+  <span class="ttl">仕組み構築 完全マニュアル【基礎編】<em>モック v1</em></span>
+  <button id="layoutToggle" type="button">見開きにする</button>
+  <div id="pbar"><i id="pfill"></i></div>
+</header>
+
+<main id="book">
+
+<!-- 0. モックについて -->
+<section class="page" data-kind="note">
+  <span class="mockbadge">MOCK</span>
+  <h2 class="band">このモックについて</h2>
+  <ul class="plain mockinfo">
+    <li>本番（全57ページ想定）から<b>12ページを抜粋</b>したモックです。文字の読みやすさとページ送りの感触を確認してください。</li>
+    <li><b>操作方法</b>：画面下の「前へ／次へ」ボタン、横スワイプ（スマホ）、←→キー（PC）。</li>
+    <li><b>PCでは右上のボタン</b>で「見開き2ページ ⇔ 1カラム」を切り替えて比較できます。</li>
+    <li>文章は改訂原稿v1の実文章です。画像・動画はプレースホルダ（本番で差し込み）。</li>
+    <li>CTAページのオレンジボタンは、実際のウェビナー登録ページが開きます。</li>
+  </ul>
+</section>
+
+<!-- 1. 表紙 -->
+<section class="page dark cover" data-kind="cover">
+  <div class="cover-frame">
+    <p class="cover-sub">月4時間の作業で、<br>旅費が消える生活を手に入れる！</p>
+    <div class="gold-rule"></div>
+    <p class="cover-title">「仕組み構築<br>完全マニュアル」</p>
+    <p class="cover-hen">【基礎編】</p>
+    <div class="cover-plane">✈︎</div>
+    <div class="gold-rule"></div>
+    <p class="cover-author">増田 和彦</p>
+  </div>
+</section>
+
+<!-- 2. 目次 -->
+<section class="page dark royal" data-kind="toc">
+  <div>
+    <div class="gold-rule"></div>
+    <p class="dv-num" style="letter-spacing:.5em">目 次</p>
+    <div class="gold-rule"></div>
+    <ul class="toc-list">
+      <li>はじめに</li>
+      <li><b>第1章</b>マイルの秘密</li>
+      <li><b>第2章</b>「仕組み」の全体像</li>
+      <li><b>第3章</b>貯まったマイルの「賢い使い方」</li>
+      <li><b>第4章</b>実践者たちの声</li>
+      <li><b>最終章</b>「いつかね」を卒業する日</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 3. 章扉：はじめに -->
+<section class="page dark royal" data-kind="divider">
+  <div>
+    <div class="gold-rule"></div>
+    <p class="dv-title">はじめに</p>
+    <div class="gold-rule"></div>
+  </div>
+</section>
+
+<!-- 4. 本文：旅費が消える生活への第一歩 -->
+<section class="page" data-kind="body">
+  <h2 class="band">旅費が消える生活への第一歩</h2>
+  <p class="lead">「もっと自由に旅行がしたい」</p>
+  <p>あなたも、そう思ったことがあるのではないでしょうか？</p>
+  <div class="tight">
+    <p>毎年、家族で沖縄に行きたい。</p>
+    <p>北海道で美味しいものを食べたい。</p>
+    <p>子供をディズニーに連れて行ってあげたい。</p>
+  </div>
+  <div class="tight" style="margin-top:1em">
+    <p>でも、飛行機代だけで10万円以上。</p>
+    <p>ホテル代を入れたら20万、30万...。</p>
+  </div>
+  <p style="margin-top:1em">子供が「沖縄行きたい」「ディズニー行きたい」と言うたびに、<br>
+  <span class="em">「いつかね」と答える自分が情けない。</span></p>
+  <p>旅費を気にせず、思い切り推し活がしたい。</p>
+  <div class="tight">
+    <p>ライブやイベントのたびに、交通費と宿泊費で財布が空っぽ。</p>
+    <p>「推しのためなら仕方ない」と思いつつも、毎回の出費が正直キツい。</p>
+    <p>もっと気軽に遠征できたら、どれだけ楽しいか...。</p>
+  </div>
+  <p style="margin-top:1em">日本中を旅しながら、リモートワークをしてみたい。</p>
+  <div class="tight">
+    <p>今の時代、パソコン1台あればどこでも仕事ができる。</p>
+    <p>なのに、旅費がネックで結局いつも同じ場所にいる。</p>
+    <p>月に何度も旅行できるほどの余裕があれば、<br>憧れの「旅しながら働く」生活ができるのに...。</p>
+  </div>
+  <h3 class="sub">でも、現実は。。。</h3>
+  <div class="tight">
+    <p>仕事は忙しい。</p>
+    <p>副業する時間もない。</p>
+    <p>節約しても、旅費なんて到底貯まらない。</p>
+  </div>
+  <p style="margin-top:1em">「このまま一生、旅行は我慢し続けるしかないのか...」</p>
+  <p>もし、あなたがそんな風に感じているなら、<br>
+  <span class="em">このマニュアルはあなたの為にあります。</span></p>
+</section>
+
+<!-- 5. 本文：その前に、正直に申し上げます -->
+<section class="page" data-kind="body">
+  <h2 class="band">その前に、正直に申し上げます</h2>
+  <p>この先を読む前に、ひとつだけ。</p>
+  <p><b>すでに毎月ビジネスクラスに乗って、<br>ラウンジでシャンパンを飲んでいる方。</b></p>
+  <div class="tight">
+    <p>この先は、あなたには関係のない話です。</p>
+    <p>そっと閉じて、その生活を存分に楽しんでください。</p>
+  </div>
+  <p style="margin-top:1.2em"><b>「このまま旅行は我慢し続ける生活で、まあいいや」<br>と思っている方。</b></p>
+  <div class="tight">
+    <p>こちらも、読んでいただいても意味がありません。</p>
+    <p>そっと閉じて、いつもの毎日にお戻りください。</p>
+  </div>
+  <div class="tight" style="margin-top:1.2em">
+    <p>このマニュアルには、そこそこの分量があります。</p>
+    <p>興味のない方の時間を奪うつもりはありません。</p>
+  </div>
+  <p style="margin-top:1.2em">ただ、</p>
+  <p><b>高級ホテルにも、ビジネスクラスにも興味はある。<br>でも、今まで縁がなかった。</b></p>
+  <p>——そういう方には、これはとても大事な話になります。</p>
+  <p><span class="em">そういう方だけ、この先を読み進めてください。</span></p>
+</section>
+
+<!-- 6. 本文：秘密①（図版プレースホルダ入り） -->
+<section class="page" data-kind="body">
+  <h2 class="band">秘密①：「マイル」を使っています</h2>
+  <div class="tight">
+    <p>私たちが"タダ同然"で旅行できている最大の理由。</p>
+    <p>それは、「マイル」を使っているからです。</p>
+  </div>
+  <figure class="ph">
+    <div class="phbox">図版プレースホルダ<br>（本番：16:9バナー 1800×1013 をここに配置）</div>
+    <figcaption>※ 画像はUTAGEメディアにアップしてURL参照（仕様書§7）</figcaption>
+  </figure>
+  <p>マイルとは、航空会社が提供しているポイントのようなものです。<br>
+  貯めると、飛行機の航空券や、高級ホテルの宿泊と交換できます。</p>
+  <p>「マイルなら知ってるよ。クレジットカードで貯まるやつでしょ？」</p>
+  <p>はい、その通りです。</p>
+  <p>でも、私たちがやっているのは、<br>
+  <b>クレジットカードでコツコツ貯める方法ではありません。</b></p>
+</section>
+
+<!-- 7. CTA① -->
+<section class="page" data-kind="cta">
+  <p>先にお伝えしておきます。</p>
+  <p>この先で「仕組みの全体像」をお話ししますが、<br>
+  読み終わったあと、たぶんこう思います。</p>
+  <p>「理屈はわかった。でも、本当に回るの？」</p>
+  <p>——その答えを、私は文章では用意していません。<br>
+  <b>画面をお見せしながら、あなたにもできるように、<br>
+  やり方をご覧いただくことにしています。</b></p>
+  <div class="cta-box">
+    <div class="cta-rule"></div>
+    <p class="cta-title">マイル獲得実演 <span style="white-space:nowrap">Zoomウェビナー</span><small>（参加無料）</small></p>
+    <div class="cta-rule"></div>
+    <ul class="cta-list">
+      <li>一回の食事で3,500マイル貯まる実演</li>
+      <li>国際線の特典航空券に、国内線をタダで付ける実演</li>
+      <li>月4〜5万マイル貯まっている、実際のカード履歴</li>
+    </ul>
+    <p class="cta-note">先に席だけ押さえておいて、<br>続きを読んでいただくのが一番スムーズです。</p>
+    <a class="cta-btn" href="https://meta.tabizero.com/p/FFWba0HcIXzp" target="_blank" rel="noopener">▶ ウェビナーの日程を選ぶ</a>
+  </div>
+  <p class="mocknote">※モック注記：本番ではCTA①〜⑥それぞれに個別計測リンクを割り当てます（仕様書§8）。ボタンを押すと実際のウェビナーページが新しいタブで開きます。</p>
+</section>
+
+<!-- 8. 章扉：第1章 -->
+<section class="page dark royal" data-kind="divider">
+  <div>
+    <div class="gold-rule"></div>
+    <p class="dv-num">第 1 章</p>
+    <p class="dv-title">マイルの秘密</p>
+    <div class="gold-rule"></div>
+  </div>
+</section>
+
+<!-- 9. 本文：マイルの「本当の価値」 -->
+<section class="page" data-kind="body">
+  <h2 class="band">マイルの「本当の価値」</h2>
+  <p>楽天ポイント、Tポイント、dポイント...</p>
+  <p>これらの一般的なポイントは、1ポイント＝1円の価値です。<br>
+  1,000ポイント持っていれば、1,000円分の買い物ができる。</p>
+  <p>シンプルですよね。</p>
+  <p>では、マイルはどうでしょうか？</p>
+  <p><b>マイルは、1マイル＝1円ではありません。</b></p>
+  <p>使い方によって、1マイルの価値が大きく変わるのです。</p>
+  <h3 class="sub">【例①】国内線エコノミーの場合</h3>
+  <p>東京から沖縄への往復航空券を例に考えてみましょう。</p>
+  <ul class="plain">
+    <li>必要マイル：15,000マイル</li>
+    <li>同じ航空券を現金で買うと：約46,000円</li>
+  </ul>
+  <p>つまり、15,000マイルで46,000円の価値が得られます。<br>
+  計算すると、<span class="em">1マイル＝約3円</span>の価値です。</p>
+  <p>「おお、1ポイント1円より全然お得じゃん！」</p>
+  <p>そうなんです。でも、これはまだ序の口です。</p>
+  <h3 class="sub">【例②】国際線ビジネスクラスの場合</h3>
+  <p>東京からハワイへのビジネスクラス往復を考えてみましょう。</p>
+  <ul class="plain">
+    <li>必要マイル：65,000マイル</li>
+    <li>同じ航空券を現金で買うと：約50万円</li>
+  </ul>
+  <p>計算すると、<span class="em">1マイル＝約7.7円</span>の価値です。</p>
+  <h3 class="sub">【例③】国際線ファーストクラスの場合</h3>
+  <p>さらに、東京からロンドンへのファーストクラス往復だと...</p>
+  <ul class="plain">
+    <li>必要マイル：160,000マイル</li>
+    <li>同じ航空券を現金で買うと：約250万円</li>
+  </ul>
+  <p>計算すると、<span class="em">1マイル＝約15.6円</span>の価値です。</p>
+  <p>使い方次第で、価値が5倍以上も変わるのです。</p>
+  <p><b>これが、マイルの「本当の価値」です。</b></p>
+</section>
+
+<!-- 10. 動画ページ（サンプル） -->
+<section class="page" data-kind="video">
+  <h2 class="band">動画ページの型（サンプル）</h2>
+  <div class="videobox"><div class="playbtn"></div></div>
+  <p class="vcap">（サンプル）動画タイトルがここに入ります</p>
+  <p style="margin-top:1.2em">本番で動画を入れる場合は、この型で<b>1動画＝1ページ</b>にします（YouTube または mp4 を埋め込み・仕様書§6.8）。</p>
+  <p>動画ページでも「前へ／次へ」の操作は通常ページとまったく同じです。</p>
+  <p class="mocknote">※モック注記：現時点で動画の挿入予定はありません（仕様書§4）。型の確認用サンプルページです。</p>
+</section>
+
+<!-- 11. 本文：実践者の声（田中さん） -->
+<section class="page" data-kind="voice">
+  <h2 class="band">第4章　実践者たちの声（表示例）</h2>
+  <div class="voice">
+    <p class="voice-name">実践者の声：田中さん（40代・会社員・男性）</p>
+    <p class="voice-head">「月5万円の副収入と、年3回の家族旅行が実現しました」</p>
+    <p>私は都内の会社に勤める普通のサラリーマンです。妻と子供2人の4人家族。</p>
+    <p>毎年「今年こそ家族旅行に行こう」と思うのですが、<br>
+    飛行機代とホテル代を計算すると、いつも諦めていました。</p>
+    <p>子供たちが「沖縄行きたい」「北海道行きたい」と言うたびに、<br>
+    「来年ね」と言い続けて、もう何年も経っていました。</p>
+    <p>そんな時、増田さんのビジネスマイラーに出会いました。<br>
+    正直、最初は半信半疑でした。</p>
+    <p>でも、やってみると、本当にマイルが貯まり始めたんです。<br>
+    しかも、お金も増えていく。</p>
+    <p>3ヶ月目には月5万円の利益が安定して出るようになり、<br>
+    半年後には家族4人で沖縄に行けるだけのマイルが貯まっていました。</p>
+    <p>今では、年に3回は家族旅行に行っています。沖縄、北海道、ディズニー...</p>
+    <p>子供たちの笑顔を見るたびに、始めて本当に良かったと思います。</p>
+    <p style="margin-bottom:0">「来年ね」が「今年はどこ行く？」に変わりました。</p>
+  </div>
+</section>
+
+<!-- 12. 本文：最後に（最終ページ） -->
+<section class="page" data-kind="final">
+  <h2 class="band">最後に</h2>
+  <p>私がこのマニュアルを作った理由は、シンプルです。</p>
+  <p><b>「いつかね」と言い続ける人を、一人でも減らしたい。</b></p>
+  <p>家族との時間。推しを応援する時間。自由に旅をする時間。</p>
+  <p>これらはすべて、有限です。</p>
+  <p>お金がないから、時間がないからという理由で、<br>
+  その貴重な時間を諦めてほしくない。</p>
+  <p>私自身、外資系企業で忙しく働きながらも、<br>
+  この仕組みを作ったことで、人生が変わりました。</p>
+  <p>今では、毎月高級ホテルに"タダ同然"で泊まり、年に何度も海外旅行を楽しんでいます。</p>
+  <p>そして、私だけでなく、<br>
+  この仕組みを教えた500名以上の方々も、同じように人生を変えています。</p>
+  <p>次は、あなたの番です。</p>
+  <p><span class="em">「いつかね」を「今度はどこ行く？」に変える日は、今日です。</span></p>
+  <p>ウェビナーでお会いしましょう。</p>
+  <p class="sign">増田 和彦</p>
+  <hr class="sep">
+  <p class="mocknote" style="text-align:center">モックはここまでです（最終ページでは「次へ」が無効になります）</p>
+</section>
+
+</main>
+
+<nav id="navbar">
+  <button id="prev" type="button" aria-label="前のページへ">← 前へ</button>
+  <span id="counter">1 / 13</span>
+  <button id="next" type="button" aria-label="次のページへ">次へ →</button>
+</nav>
+
+<script>
+(function(){
+  var book=document.getElementById('book');
+  var pages=[].slice.call(document.querySelectorAll('.page'));
+  var prev=document.getElementById('prev');
+  var next=document.getElementById('next');
+  var counter=document.getElementById('counter');
+  var pfill=document.getElementById('pfill');
+  var toggle=document.getElementById('layoutToggle');
+  var mqPC=window.matchMedia('(min-width:1024px)');
+  var i=0, spread=false;
+
+  // 開発用: #spread / #ページ番号
+  (location.hash||'').replace('#','').split(',').forEach(function(t){
+    if(t==='spread') spread=true;
+    else if(/^\d+$/.test(t)) i=Math.min(Math.max(parseInt(t,10)-1,0),pages.length-1);
+  });
+
+  function isSpread(){return spread&&mqPC.matches}
+  function step(){return isSpread()?2:1}
+
+  function render(dir){
+    if(isSpread()) i-=i%2;
+    document.body.classList.toggle('spread',isSpread());
+    var s=step();
+    pages.forEach(function(p,idx){
+      var show=(idx===i)||(s===2&&idx===i+1);
+      p.hidden=!show;
+      p.classList.remove('enter-next','enter-prev');
+      if(show&&dir) p.classList.add(dir>0?'enter-next':'enter-prev');
+    });
+    var last=Math.min(i+s,pages.length);
+    counter.textContent=(s===2&&i+1<pages.length)?(i+1)+'–'+(i+2)+' / '+pages.length:(i+1)+' / '+pages.length;
+    prev.disabled=(i<=0);
+    next.disabled=(i+s)>=pages.length;
+    pfill.style.width=Math.min(100,(last/pages.length)*100)+'%';
+    book.scrollTop=0;
+    if(toggle) toggle.textContent=spread?'1カラムにする':'見開きにする';
+  }
+
+  function go(d){
+    var s=step();
+    var ni=i+d*s;
+    if(ni<0) ni=0;
+    if(ni>pages.length-1) return;
+    if(d>0&&(i+s)>=pages.length) return;
+    i=ni; render(d);
+  }
+
+  prev.addEventListener('click',function(){go(-1)});
+  next.addEventListener('click',function(){go(1)});
+  if(toggle) toggle.addEventListener('click',function(){spread=!spread;render(0)});
+  mqPC.addEventListener?mqPC.addEventListener('change',function(){render(0)}):mqPC.addListener(function(){render(0)});
+
+  document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight'){go(1)}
+    else if(e.key==='ArrowLeft'){go(-1)}
+  });
+
+  // 横スワイプ（縦スクロールと誤爆しない判定）
+  var sx=0,sy=0,st=0;
+  book.addEventListener('touchstart',function(e){
+    if(e.touches.length!==1)return;
+    sx=e.touches[0].clientX;sy=e.touches[0].clientY;st=Date.now();
+  },{passive:true});
+  book.addEventListener('touchend',function(e){
+    var t=e.changedTouches[0];
+    var dx=t.clientX-sx, dy=t.clientY-sy;
+    if(Date.now()-st>700)return;
+    if(Math.abs(dx)>=60&&Math.abs(dx)>Math.abs(dy)*1.5){
+      if(dx<0)go(1);else go(-1);
+    }
+  },{passive:true});
+
+  render(0);
+})();
+</script>
+</body>
+</html>
