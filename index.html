@@ -356,24 +356,20 @@ ul.plain.check li::before{content:"✓";color:var(--gold);font-weight:700;left:.
 .page.dark .dv-num{margin-bottom:.1em}
 
 /* ================================================================
-   表紙・目次・章扉は「常に1ページに収める」
-   ・本文の文字サイズ倍率(--fs)の影響を受けない＝小/中/大で高さが変わらない
-   ・ページ送りモード(1024px未満)では画面高ぴったりに固定し、はみ出させない
-   ・画面の低い端末では文字・余白・装飾を画面高(vh)に追随させて縮める
+   表紙・目次・章扉は「文字サイズ中で1ページに収まる」
+   ・文字サイズ切替は本文と同じように効く（小/中/大で変わる）
+   ・基準サイズだけ画面高(vh)で頭打ちにして、低い端末でも「中」なら必ず収まるようにする
+   ・「大」では画面からあふれてスクロールする（切れずに読める）
    ================================================================ */
-.page[data-kind="cover"],
-.page[data-kind="toc"],
-.page[data-kind="divider"]{font-size:var(--pfs)}
-
 body:not(.scrollmode) .page[data-kind="cover"],
 body:not(.scrollmode) .page[data-kind="toc"],
 body:not(.scrollmode) .page[data-kind="divider"]{
-  height:100%;min-height:0;overflow:hidden;
+  min-height:100%;height:auto;
 }
 
 /* 表紙 */
 body:not(.scrollmode) .page[data-kind="cover"]{
-  font-size:min(var(--pfs),2.15vh);padding:min(18px,2vh);
+  font-size:calc(min(var(--pfs),2.15vh) * var(--fs));padding:min(18px,2vh);
 }
 body:not(.scrollmode) .page[data-kind="cover"] .cover-frame{padding:min(34px,3vh) 16px}
 body:not(.scrollmode) .page[data-kind="cover"] .gold-rule{margin:min(14px,1.4vh) auto}
@@ -381,12 +377,12 @@ body:not(.scrollmode) .page[data-kind="cover"] .cover-plane{font-size:min(52px,6
 body:not(.scrollmode) .page[data-kind="cover"] .cover-author{margin-top:min(44px,3.6vh)}
 
 /* 目次 */
-body:not(.scrollmode) .page[data-kind="toc"]{font-size:min(var(--pfs),2.3vh);padding:min(26px,3vh) 22px}
+body:not(.scrollmode) .page[data-kind="toc"]{font-size:calc(min(var(--pfs),2.3vh) * var(--fs));padding:min(26px,3vh) 22px}
 body:not(.scrollmode) .page[data-kind="toc"] .toc-list{line-height:min(2.6,4.2vh);margin-top:min(1.6em,2.6vh)}
 body:not(.scrollmode) .page[data-kind="toc"] .gold-rule{margin:min(14px,1.6vh) auto}
 
 /* 章扉 */
-body:not(.scrollmode) .page[data-kind="divider"]{font-size:min(var(--pfs),2.6vh);padding:min(26px,3vh) 22px}
+body:not(.scrollmode) .page[data-kind="divider"]{font-size:calc(min(var(--pfs),2.6vh) * var(--fs));padding:min(26px,3vh) 22px}
 body:not(.scrollmode) .page[data-kind="divider"] .dv-icon{width:min(96px,13vh);height:min(96px,13vh);margin-bottom:min(16px,2vh)}
 body:not(.scrollmode) .page[data-kind="divider"] .gold-rule{margin:min(14px,1.8vh) auto}
 
@@ -1481,6 +1477,14 @@ body:not(.scrollmode) .page[data-kind="divider"] .gold-rule{margin:min(14px,1.8v
 
   applyMode(true);
   syncHead();
+})();
+
+/* --- 起動時はつねに文字サイズ「中」から始める（前回の選択は持ち越さない） --- */
+(function(){
+  try{
+    var m=document.querySelector('#fsize button[data-fs="m"]');
+    if(m && document.documentElement.getAttribute('data-fs')!=='m') m.click();
+  }catch(e){}
 })();
 
 /* --- LINEから引き継いだ読者識別子をCTAリンクへ受け渡す（3-B方式） --- */
