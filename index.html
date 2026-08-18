@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
-<title>仕組み構築 完全マニュアル【基礎編】｜モック v4</title>
+<title>仕組み構築 完全マニュアル【基礎編】｜モック v5</title>
 <style>
 :root{
   --navy:#182449;
@@ -22,10 +22,10 @@
   --pfs:17px;   /* 本文の基準サイズ（画面幅で切替） */
   --fs:1;       /* 文字サイズ倍率（既定＝中） */
 }
-/* 文字サイズ 小・中・大の倍率（スマホ・タブレット）。PCは下の1024px以上で上書き */
-html[data-fs="s"]{--fs:.94}
+/* 文字サイズ 小・中・大の倍率（PC・タブレット・スマホ共通） */
+html[data-fs="s"]{--fs:.86}
 html[data-fs="m"]{--fs:1}
-html[data-fs="l"]{--fs:1.12}
+html[data-fs="l"]{--fs:1.28}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
 body{
@@ -313,9 +313,6 @@ body.fs-lock #book{overflow:hidden}
    ================================================================ */
 @media (min-width:1024px){
   :root{--pfs:18px;--hh:52px}
-  /* PCは画面が広いぶん、小はより小さく・大はより大きく振れるようにする */
-  html[data-fs="s"]{--fs:.86}
-  html[data-fs="l"]{--fs:1.28}
   #topbar{padding:0 18px;padding-top:env(safe-area-inset-top)}
   #topbar .ttl{font-size:12.5px}
 }
@@ -343,7 +340,7 @@ body.scrollmode .vframe.is-fs{border-radius:0}
 <body>
 
 <header id="topbar">
-  <span class="ttl">仕組み構築 完全マニュアル<span class="ttl-x">【基礎編】</span><em>モック v4</em></span>
+  <span class="ttl">仕組み構築 完全マニュアル<span class="ttl-x">【基礎編】</span><em>モック v5</em></span>
 
   <div id="hctl">
     <div id="hnav">
@@ -374,7 +371,7 @@ body.scrollmode .vframe.is-fs{border-radius:0}
     画面上部に<b>「今どのページか（12 / 13）」</b>と<b>「← 前へ／次へ →」</b>を追加しました。ボタンを押すと、前後のページの頭までスッと移動します。ページ番号はスクロールに合わせて自動で切り替わります。</li>
     <li><b>スマホ・タブレット縦</b>：画面下の「前へ／次へ」ボタン、または横スワイプで1ページずつ進みます（従来どおり）。</li>
     <li><b>文字サイズ（PC／スマホ共通）</b>：画面上部の<b>「小・中・大」</b>で本文の文字を大きくできます。選んだサイズはこの端末に記憶され、次に開いたときも維持されます。<br>
-    v4で<b>PCの振れ幅を広げました</b>（PC：小15.5px／中18px／大23px。スマホ・タブレットは従来どおり小16px／中17px／大19px）。</li>
+    v5で<b>PC・スマホとも同じ振れ幅</b>にしました（中を基準に小0.86倍・大1.28倍。PC：小15.5px／中18px／大23px、スマホ：小14.6px／中17px／大21.8px）。</li>
     <li><b>動画</b>：埋め込みのまま再生できます。動画の下の「⛶ 全画面で見る」を押すと、<b>ワンクリックで全画面</b>に切り替わります（再生は途切れません）。戻すときは右上の「✕」またはEscキー。</li>
     <li>文章は改訂原稿v1の実文章です。画像はプレースホルダ（本番で差し込み）。動画は動作確認用のサンプル映像です。</li>
     <li>CTAページのオレンジボタンは、実際のウェビナー登録ページが開きます。</li>
