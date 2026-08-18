@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
-<title>仕組み構築 完全マニュアル【基礎編】｜モック v1</title>
+<title>仕組み構築 完全マニュアル【基礎編】｜モック v4</title>
 <style>
 :root{
   --navy:#182449;
@@ -19,7 +19,13 @@
   --bg:#eceae4;
   --hh:44px;
   --nh:62px;
+  --pfs:17px;   /* 本文の基準サイズ（画面幅で切替） */
+  --fs:1;       /* 文字サイズ倍率（既定＝中） */
 }
+/* 文字サイズ 小・中・大の倍率（スマホ・タブレット）。PCは下の1024px以上で上書き */
+html[data-fs="s"]{--fs:.94}
+html[data-fs="m"]{--fs:1}
+html[data-fs="l"]{--fs:1.12}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
 body{
@@ -34,21 +40,63 @@ body{
 #topbar{
   position:fixed;top:0;left:0;right:0;height:var(--hh);z-index:20;
   background:var(--navy);color:#fff;
-  display:flex;align-items:center;justify-content:space-between;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
   padding:0 12px;padding-top:env(safe-area-inset-top);
 }
 #topbar .ttl{
-  font-size:12px;letter-spacing:.04em;opacity:.92;
+  font-size:12px;letter-spacing:.04em;opacity:.92;flex:1 1 auto;min-width:0;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
-#topbar .ttl em{font-style:normal;color:var(--gold-light);margin-left:.5em;font-size:11px;border:1px solid var(--gold);border-radius:3px;padding:0 4px}
-#layoutToggle{
-  display:none;
-  font:inherit;font-size:12px;color:#fff;background:transparent;
-  border:1px solid rgba(255,255,255,.55);border-radius:14px;
-  padding:4px 12px;cursor:pointer;flex-shrink:0;margin-left:12px;
+
+/* ---- ヘッダー内の操作エリア ---- */
+#hctl{display:flex;align-items:center;gap:12px;flex:0 0 auto}
+
+/* ページ番号＋前へ／次へ（PC＝連続スクロール時のみ表示） */
+#hnav{display:none;align-items:center;gap:6px}
+body.scrollmode #hnav{display:flex}
+#hnav button{
+  font:inherit;font-size:12px;font-weight:700;color:#fff;
+  background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.45);
+  border-radius:6px;padding:0 11px;height:30px;cursor:pointer;
+  line-height:1;white-space:nowrap;
 }
-#layoutToggle:hover{border-color:#fff}
+#hnav button:hover:not(:disabled){background:rgba(255,255,255,.24)}
+#hnav button:active:not(:disabled){transform:translateY(1px)}
+#hnav button:disabled{opacity:.32;cursor:default}
+#hcounter{
+  font-size:12.5px;font-weight:700;color:var(--gold-light);
+  letter-spacing:.06em;white-space:nowrap;text-align:center;
+  min-width:5.4em;font-variant-numeric:tabular-nums;
+}
+
+/* 文字サイズ 小・中・大（PC・スマホ共通） */
+#fsize{display:flex;align-items:center;gap:4px}
+#fsize .fslabel{font-size:11px;opacity:.72;margin-right:2px;white-space:nowrap;letter-spacing:.04em}
+#fsize button{
+  font:inherit;font-weight:700;color:#fff;
+  background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.45);
+  border-radius:6px;padding:0;cursor:pointer;line-height:1;
+  width:30px;height:30px;font-size:12.5px;
+}
+#fsize button:hover{background:rgba(255,255,255,.24)}
+#fsize button:active{transform:translateY(1px)}
+#fsize button[aria-pressed="true"]{
+  background:var(--gold);border-color:var(--gold);color:var(--navy);
+}
+#topbar button:focus-visible{outline:2px solid var(--gold-light);outline-offset:1px}
+/* 狭い画面ではタイトルを短くして、バッジが途中で切れないようにする */
+@media (max-width:767px){
+  #topbar .ttl{font-size:11px}
+  #topbar .ttl .ttl-x{display:none}
+  #topbar .ttl em{font-size:10px}
+}
+@media (max-width:429px){
+  #topbar .ttl{letter-spacing:0}
+  #fsize .fslabel{font-size:10px}
+  #fsize button{width:28px;height:28px;font-size:12px}
+  #hctl{gap:8px}
+}
+#topbar .ttl em{font-style:normal;color:var(--gold-light);margin-left:.5em;font-size:11px;border:1px solid var(--gold);border-radius:3px;padding:0 4px}
 #pbar{position:absolute;left:0;bottom:0;height:2px;width:100%;background:rgba(255,255,255,.14)}
 #pbar i{display:block;height:100%;width:0;background:var(--gold);transition:width .2s}
 
@@ -67,7 +115,7 @@ body{
   min-height:calc(100dvh - var(--hh) - var(--nh) - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   padding:26px 22px 40px;
   max-width:680px;margin:0 auto;
-  font-size:17px;line-height:1.95;letter-spacing:.02em;
+  font-size:calc(var(--pfs) * var(--fs));line-height:1.95;letter-spacing:.02em;
 }
 .page p{margin:0 0 1.15em}
 .page .tight p{margin-bottom:.35em}
@@ -151,10 +199,20 @@ a.cta-btn{
 a.cta-btn:active{transform:translateY(1px)}
 .mocknote{font-size:11.5px;color:#8a8a8a;margin-top:1.6em;line-height:1.7}
 
-/* ---- 動画ページ ---- */
-.videobox{
-  aspect-ratio:16/9;background:#101318;border-radius:6px;
-  display:flex;align-items:center;justify-content:center;margin:1.2em 0 .7em;
+/* ================================================================
+   動画ブロック（埋め込み ⇔ 全画面 をワンクリック切替）
+   ================================================================ */
+.vwrap{margin:1.3em 0 .2em}
+.vframe{
+  position:relative;background:#000;border-radius:6px;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+}
+.vstage{position:relative;width:100%;aspect-ratio:16/9}
+.vstage iframe,.vstage video,.vstage .vph{
+  position:absolute;inset:0;width:100%;height:100%;border:0;display:block;
+}
+.vstage .vph{
+  background:#101318;display:flex;align-items:center;justify-content:center;
 }
 .playbtn{
   width:72px;height:72px;border-radius:50%;
@@ -165,7 +223,50 @@ a.cta-btn:active{transform:translateY(1px)}
   border-style:solid;border-width:14px 0 14px 24px;
   border-color:transparent transparent transparent var(--gold);
 }
-.vcap{text-align:center;font-size:.95em;color:#555}
+.vbar{display:flex;justify-content:center;margin-top:10px}
+button.vfs{
+  font:inherit;font-size:14px;font-weight:700;color:var(--royal);
+  background:#fff;border:1.5px solid var(--royal);border-radius:8px;
+  padding:9px 20px;cursor:pointer;line-height:1.3;
+}
+button.vfs:hover{background:#f3f4fb}
+button.vfs:active{transform:translateY(1px)}
+.vcap{text-align:center;font-size:.95em;color:#555;margin-top:.7em}
+
+/* 全画面ボタン（全画面中だけ表示） */
+button.vclose{
+  display:none;position:absolute;top:14px;right:14px;z-index:5;
+  font:inherit;font-size:13px;font-weight:700;color:#fff;
+  background:rgba(0,0,0,.62);border:1px solid rgba(255,255,255,.6);
+  border-radius:999px;padding:8px 14px;cursor:pointer;line-height:1;
+  -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);
+}
+button.vclose:hover{background:rgba(0,0,0,.82)}
+
+/* 全画面状態（ネイティブ全画面・擬似全画面 共通） */
+.vframe.is-fs{
+  position:fixed;inset:0;z-index:9999;margin:0;border-radius:0;
+  width:100vw;height:100vh;height:100dvh;max-width:none;
+}
+.vframe.is-fs .vstage{
+  width:100%;max-width:calc(100vh * 16 / 9);max-width:calc(100dvh * 16 / 9);
+}
+.vframe.is-fs button.vclose{display:block}
+.vframe.is-fs::backdrop{background:#000}
+body.fs-lock #book{overflow:hidden}
+
+/* スマホ縦向きの全画面は90度回転して画面いっぱいに */
+@media (max-width:899px) and (orientation:portrait){
+  .vframe.is-fs .vstage{
+    position:absolute;top:50%;left:50%;
+    width:min(100vh, calc(100vw * 16 / 9));
+    width:min(100dvh, calc(100vw * 16 / 9));
+    max-width:none;
+    transform:translate(-50%,-50%) rotate(90deg);
+  }
+  .vframe.is-fs button.vclose{padding:10px 12px}
+  .vframe.is-fs button.vclose .lbl{display:none}
+}
 
 /* ---- 署名 ---- */
 .sign{text-align:right;font-weight:700;font-size:1.08em;margin-top:2.2em}
@@ -174,7 +275,7 @@ a.cta-btn:active{transform:translateY(1px)}
 .mockbadge{display:inline-block;background:var(--navy);color:var(--gold-light);border-radius:4px;font-size:12px;padding:3px 10px;letter-spacing:.15em;margin-bottom:14px}
 .mockinfo li{margin-bottom:.7em}
 
-/* ---- 下部ナビ ---- */
+/* ---- 下部ナビ（スマホ・タブレット縦のみ） ---- */
 #navbar{
   position:fixed;left:0;right:0;bottom:0;z-index:20;
   height:calc(var(--nh) + env(safe-area-inset-bottom));
@@ -191,36 +292,73 @@ a.cta-btn:active{transform:translateY(1px)}
 #navbar button:disabled{color:#b9b9b9;border-color:#d5d5d5;cursor:default}
 #counter{flex:1;text-align:center;font-size:13px;color:#666;letter-spacing:.06em;white-space:nowrap}
 
-/* ---- ページ切替アニメーション ---- */
+/* ---- ページ切替アニメーション（ページ送りモードのみ） ---- */
 @keyframes inNext{from{opacity:.01;transform:translateX(16px)}to{opacity:1;transform:none}}
 @keyframes inPrev{from{opacity:.01;transform:translateX(-16px)}to{opacity:1;transform:none}}
 .page.enter-next{animation:inNext .16s ease-out}
 .page.enter-prev{animation:inPrev .16s ease-out}
 @media (prefers-reduced-motion:reduce){.page.enter-next,.page.enter-prev{animation:none}}
 
-/* ---- タブレット・PC ---- */
+/* ---- タブレット ---- */
 @media (min-width:768px){
-  .page{padding:44px 48px 56px;font-size:17.5px;border-radius:2px}
+  :root{--pfs:17.5px}
+  .page{padding:44px 48px 56px;border-radius:2px}
   #book{padding:26px 0}
   .page{box-shadow:0 1px 8px rgba(40,35,20,.13);min-height:72vh}
 }
+
+/* ================================================================
+   PC（1024px以上）＝ 連続スクロールモード
+   ページ送りは行わず、全ページを上から下へ読ませる
+   ================================================================ */
 @media (min-width:1024px){
-  #layoutToggle{display:inline-block}
-  .page{font-size:18px}
-  /* 見開きモード */
-  body.spread #book{
-    display:grid;grid-template-columns:repeat(2,minmax(0,520px));
-    justify-content:center;align-items:stretch;gap:26px;padding:26px 20px;
-  }
-  body.spread .page{margin:0;max-width:none;width:100%}
+  :root{--pfs:18px;--hh:52px}
+  /* PCは画面が広いぶん、小はより小さく・大はより大きく振れるようにする */
+  html[data-fs="s"]{--fs:.86}
+  html[data-fs="l"]{--fs:1.28}
+  #topbar{padding:0 18px;padding-top:env(safe-area-inset-top)}
+  #topbar .ttl{font-size:12.5px}
 }
+body.scrollmode #navbar{display:none}
+body.scrollmode #book{bottom:0;padding:26px 0 60px}
+body.scrollmode #pbar i{transition:none}
+body.scrollmode .page{
+  min-height:0;position:relative;
+  margin:0 auto 26px;padding:52px 52px 60px;
+}
+body.scrollmode .page::after{
+  content:attr(data-p);position:absolute;right:18px;bottom:14px;
+  font-size:11px;color:#b3ad9c;letter-spacing:.08em;pointer-events:none;
+}
+body.scrollmode .page.dark::after{color:rgba(255,255,255,.42)}
+body.scrollmode .page.cover::after{display:none}
+body.scrollmode .page.dark{min-height:46vh;padding:56px 52px}
+body.scrollmode .page.cover{min-height:78vh;padding:26px}
+/* PCでは動画をページ幅いっぱいに広げる */
+body.scrollmode .vwrap{margin-left:-52px;margin-right:-52px}
+body.scrollmode .vframe{border-radius:0}
+body.scrollmode .vframe.is-fs{border-radius:0}
 </style>
 </head>
 <body>
 
 <header id="topbar">
-  <span class="ttl">仕組み構築 完全マニュアル【基礎編】<em>モック v1</em></span>
-  <button id="layoutToggle" type="button">見開きにする</button>
+  <span class="ttl">仕組み構築 完全マニュアル<span class="ttl-x">【基礎編】</span><em>モック v4</em></span>
+
+  <div id="hctl">
+    <div id="hnav">
+      <button id="hprev" type="button" aria-label="前のページへ">← 前へ</button>
+      <span id="hcounter" aria-live="polite" aria-label="現在のページ">1 / 13</span>
+      <button id="hnext" type="button" aria-label="次のページへ">次へ →</button>
+    </div>
+    <div id="fsize" role="group" aria-label="文字サイズ">
+      <span class="fslabel">文字</span>
+      <button type="button" data-fs="s" aria-pressed="false" aria-label="文字サイズ 小">小</button>
+      <button type="button" data-fs="m" aria-pressed="true"  aria-label="文字サイズ 中">中</button>
+      <button type="button" data-fs="l" aria-pressed="false" aria-label="文字サイズ 大">大</button>
+    </div>
+  </div>
+
   <div id="pbar"><i id="pfill"></i></div>
 </header>
 
@@ -231,10 +369,14 @@ a.cta-btn:active{transform:translateY(1px)}
   <span class="mockbadge">MOCK</span>
   <h2 class="band">このモックについて</h2>
   <ul class="plain mockinfo">
-    <li>本番（全57ページ想定）から<b>12ページを抜粋</b>したモックです。文字の読みやすさとページ送りの感触を確認してください。</li>
-    <li><b>操作方法</b>：画面下の「前へ／次へ」ボタン、横スワイプ（スマホ）、←→キー（PC）。</li>
-    <li><b>PCでは右上のボタン</b>で「見開き2ページ ⇔ 1カラム」を切り替えて比較できます。</li>
-    <li>文章は改訂原稿v1の実文章です。画像・動画はプレースホルダ（本番で差し込み）。</li>
+    <li>本番（全57ページ想定）から<b>12ページを抜粋</b>したモックです。文字の読みやすさと読み進める感触を確認してください。</li>
+    <li><b>PC（画面幅1024px以上）</b>：ページ送りはありません。<b>上から下まで、そのままスクロール</b>して読めます。<br>
+    画面上部に<b>「今どのページか（12 / 13）」</b>と<b>「← 前へ／次へ →」</b>を追加しました。ボタンを押すと、前後のページの頭までスッと移動します。ページ番号はスクロールに合わせて自動で切り替わります。</li>
+    <li><b>スマホ・タブレット縦</b>：画面下の「前へ／次へ」ボタン、または横スワイプで1ページずつ進みます（従来どおり）。</li>
+    <li><b>文字サイズ（PC／スマホ共通）</b>：画面上部の<b>「小・中・大」</b>で本文の文字を大きくできます。選んだサイズはこの端末に記憶され、次に開いたときも維持されます。<br>
+    v4で<b>PCの振れ幅を広げました</b>（PC：小15.5px／中18px／大23px。スマホ・タブレットは従来どおり小16px／中17px／大19px）。</li>
+    <li><b>動画</b>：埋め込みのまま再生できます。動画の下の「⛶ 全画面で見る」を押すと、<b>ワンクリックで全画面</b>に切り替わります（再生は途切れません）。戻すときは右上の「✕」またはEscキー。</li>
+    <li>文章は改訂原稿v1の実文章です。画像はプレースホルダ（本番で差し込み）。動画は動作確認用のサンプル映像です。</li>
     <li>CTAページのオレンジボタンは、実際のウェビナー登録ページが開きます。</li>
   </ul>
 </section>
@@ -435,11 +577,26 @@ a.cta-btn:active{transform:translateY(1px)}
 <!-- 10. 動画ページ（サンプル） -->
 <section class="page" data-kind="video">
   <h2 class="band">動画ページの型（サンプル）</h2>
-  <div class="videobox"><div class="playbtn"></div></div>
-  <p class="vcap">（サンプル）動画タイトルがここに入ります</p>
-  <p style="margin-top:1.2em">本番で動画を入れる場合は、この型で<b>1動画＝1ページ</b>にします（YouTube または mp4 を埋め込み・仕様書§6.8）。</p>
-  <p>動画ページでも「前へ／次へ」の操作は通常ページとまったく同じです。</p>
-  <p class="mocknote">※モック注記：現時点で動画の挿入予定はありません（仕様書§4）。型の確認用サンプルページです。</p>
+  <figure class="vwrap">
+    <div class="vframe">
+      <div class="vstage">
+        <iframe
+          src="https://www.youtube-nocookie.com/embed/aqz-KE-bpKQ?rel=0&amp;playsinline=1"
+          title="動作確認用サンプル映像"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+          allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+      </div>
+      <button class="vclose" type="button" aria-label="全画面表示を終了して埋め込み表示に戻す">✕<span class="lbl">&nbsp;埋め込み表示に戻す</span></button>
+    </div>
+    <div class="vbar">
+      <button class="vfs" type="button">⛶ 全画面で見る</button>
+    </div>
+    <figcaption class="vcap">（サンプル映像）動画タイトルがここに入ります</figcaption>
+  </figure>
+  <p style="margin-top:1.4em">本番で動画を入れる場合は、この型で<b>1動画＝1ページ</b>にします（YouTube または mp4 を埋め込み・仕様書§6.8）。</p>
+  <p>埋め込みのまま再生でき、<b>「⛶ 全画面で見る」を1回押すだけで全画面</b>になります。再生は途切れません。戻すときは右上の「✕」、またはEscキー。</p>
+  <p>スマホを縦に持ったまま全画面にすると、自動で横向きに回転して画面いっぱいに表示されます（端末を横にすれば、そのまま横表示になります）。</p>
+  <p class="mocknote">※モック注記：埋め込んでいるのは動作確認用の一般公開サンプル映像です（本番の動画ではありません）。本番はUTAGE内にraw_htmlで設置するため、UTAGE側がこのHTMLをiframeで包む場合はネイティブ全画面がブロックされる可能性があります。その場合も自動的に「画面いっぱいの擬似全画面」に切り替わるため、見え方はほぼ同じです（本番投入時に1本だけ実機検証が必要）。</p>
 </section>
 
 <!-- 11. 本文：実践者の声（田中さん） -->
@@ -484,7 +641,7 @@ a.cta-btn:active{transform:translateY(1px)}
   <p>ウェビナーでお会いしましょう。</p>
   <p class="sign">増田 和彦</p>
   <hr class="sep">
-  <p class="mocknote" style="text-align:center">モックはここまでです（最終ページでは「次へ」が無効になります）</p>
+  <p class="mocknote" style="text-align:center">モックはここまでです</p>
 </section>
 
 </main>
@@ -503,64 +660,213 @@ a.cta-btn:active{transform:translateY(1px)}
   var next=document.getElementById('next');
   var counter=document.getElementById('counter');
   var pfill=document.getElementById('pfill');
-  var toggle=document.getElementById('layoutToggle');
+  var hprev=document.getElementById('hprev');
+  var hnext=document.getElementById('hnext');
+  var hcounter=document.getElementById('hcounter');
+  var fsBtns=[].slice.call(document.querySelectorAll('#fsize button'));
   var mqPC=window.matchMedia('(min-width:1024px)');
-  var i=0, spread=false;
+  var mqRM=window.matchMedia('(prefers-reduced-motion:reduce)');
+  var i=0;
 
-  // 開発用: #spread / #ページ番号
+  pages.forEach(function(p,idx){p.setAttribute('data-p',(idx+1)+' / '+pages.length)});
+
+  /* 開発用ハッシュ: #12 でそのページへ */
   (location.hash||'').replace('#','').split(',').forEach(function(t){
-    if(t==='spread') spread=true;
-    else if(/^\d+$/.test(t)) i=Math.min(Math.max(parseInt(t,10)-1,0),pages.length-1);
+    if(/^\d+$/.test(t)) i=Math.min(Math.max(parseInt(t,10)-1,0),pages.length-1);
   });
 
-  function isSpread(){return spread&&mqPC.matches}
-  function step(){return isSpread()?2:1}
+  function isScroll(){return mqPC.matches}
 
-  function render(dir){
-    if(isSpread()) i-=i%2;
-    document.body.classList.toggle('spread',isSpread());
-    var s=step();
+  /* ---------- ヘッダー：ページ番号と前へ／次への状態同期 ---------- */
+  function syncHead(){
+    hcounter.textContent=(i+1)+' / '+pages.length;
+    hprev.disabled=(i<=0 && atPageTop());
+    hnext.disabled=(i>=pages.length-1);
+  }
+  function atPageTop(){
+    if(!isScroll()) return true;
+    var p=pages[i];
+    return p ? (book.scrollTop-(p.offsetTop-14))<24 : true;
+  }
+
+  /* ---------- 文字サイズ 小・中・大 ---------- */
+  var FSKEY='tzmanual_fs';
+  var FSVAL={s:1,m:1,l:1};   /* 有効なキーの一覧。実際の倍率はCSS側（画面幅で変わる） */
+  var fsNow='m';
+
+  function applyFS(k,save){
+    if(!FSVAL[k]) k='m';
+    fsNow=k;
+    var keep=i, wasTop=atPageTop();
+    document.documentElement.setAttribute('data-fs',k);
+    fsBtns.forEach(function(b){
+      b.setAttribute('aria-pressed', b.getAttribute('data-fs')===k ? 'true':'false');
+    });
+    if(save){ try{localStorage.setItem(FSKEY,k)}catch(e){} }
+    /* 行の高さが変わって読んでいた場所がずれるので、同じページの頭に合わせ直す */
+    if(isScroll()){
+      i=keep;
+      if(!wasTop || keep>0) scrollToPage(keep,false);
+      updateBar(); syncHead();
+    }else{
+      book.scrollTop=0;
+    }
+  }
+
+  fsBtns.forEach(function(b){
+    b.addEventListener('click',function(){ applyFS(b.getAttribute('data-fs'),true) });
+  });
+
+  /* ---------- 動画：埋め込み ⇔ 全画面 ---------- */
+  var fsEl=null;
+
+  function nativeReq(el){
+    return el.requestFullscreen||el.webkitRequestFullscreen||el.msRequestFullscreen||null;
+  }
+  function nativeEl(){
+    return document.fullscreenElement||document.webkitFullscreenElement||document.msFullscreenElement||null;
+  }
+  function enterFS(fr){
+    if(fsEl) return;
+    fsEl=fr;
+    fr.classList.add('is-fs');
+    document.body.classList.add('fs-lock');
+    var rq=nativeReq(fr);
+    if(rq){
+      try{
+        var r=rq.call(fr);
+        if(r&&typeof r.catch==='function'){r.catch(function(){/* 擬似全画面のまま継続 */})}
+      }catch(e){/* 擬似全画面のまま継続 */}
+    }
+  }
+  function cleanupFS(){
+    if(fsEl){fsEl.classList.remove('is-fs');fsEl=null}
+    document.body.classList.remove('fs-lock');
+  }
+  function exitFS(){
+    if(nativeEl()){
+      var ex=document.exitFullscreen||document.webkitExitFullscreen||document.msExitFullscreen;
+      if(ex){try{ex.call(document)}catch(e){}}
+    }
+    cleanupFS();
+  }
+  function onFsChange(){ if(!nativeEl()&&fsEl) cleanupFS() }
+  document.addEventListener('fullscreenchange',onFsChange);
+  document.addEventListener('webkitfullscreenchange',onFsChange);
+  document.addEventListener('MSFullscreenChange',onFsChange);
+
+  [].slice.call(document.querySelectorAll('.vwrap')).forEach(function(w){
+    var fr=w.querySelector('.vframe');
+    var open=w.querySelector('.vfs');
+    var close=w.querySelector('.vclose');
+    if(open&&fr) open.addEventListener('click',function(){enterFS(fr)});
+    if(close) close.addEventListener('click',function(){exitFS()});
+  });
+
+  /* ---------- 表示モード ---------- */
+  function renderPaged(dir){
     pages.forEach(function(p,idx){
-      var show=(idx===i)||(s===2&&idx===i+1);
+      var show=(idx===i);
       p.hidden=!show;
       p.classList.remove('enter-next','enter-prev');
       if(show&&dir) p.classList.add(dir>0?'enter-next':'enter-prev');
     });
-    var last=Math.min(i+s,pages.length);
-    counter.textContent=(s===2&&i+1<pages.length)?(i+1)+'–'+(i+2)+' / '+pages.length:(i+1)+' / '+pages.length;
+    counter.textContent=(i+1)+' / '+pages.length;
     prev.disabled=(i<=0);
-    next.disabled=(i+s)>=pages.length;
-    pfill.style.width=Math.min(100,(last/pages.length)*100)+'%';
+    next.disabled=(i>=pages.length-1);
+    pfill.style.width=((i+1)/pages.length*100)+'%';
     book.scrollTop=0;
-    if(toggle) toggle.textContent=spread?'1カラムにする':'見開きにする';
+    syncHead();
   }
 
+  function updateBar(){
+    var max=book.scrollHeight-book.clientHeight;
+    pfill.style.width=(max>0?Math.min(100,(book.scrollTop/max)*100):100)+'%';
+    i=currentByScroll();   /* ページ送りモードへ戻したとき同じ位置から読めるよう保持 */
+    syncHead();
+  }
+
+  function renderScroll(){
+    pages.forEach(function(p){
+      p.hidden=false;
+      p.classList.remove('enter-next','enter-prev');
+    });
+    updateBar();
+  }
+
+  function scrollToPage(n,smooth){
+    var p=pages[n];
+    if(!p) return;
+    var top=Math.max(0,p.offsetTop-14);
+    if(smooth && !mqRM.matches && book.scrollTo){
+      try{ book.scrollTo({top:top,behavior:'smooth'}); return; }catch(e){}
+    }
+    book.scrollTop=top;
+  }
+
+  function currentByScroll(){
+    var top=book.scrollTop+40, best=0;
+    pages.forEach(function(p,idx){ if(p.offsetTop<=top) best=idx });
+    return best;
+  }
+
+  function applyMode(jump){
+    var s=isScroll(), target=i;
+    document.body.classList.toggle('scrollmode',s);
+    if(s){ renderScroll(); if(jump){ i=target; scrollToPage(target) } }
+    else { renderPaged(0) }
+  }
+
+  function onMQ(){ applyMode(true) }
+  if(mqPC.addEventListener) mqPC.addEventListener('change',onMQ);
+  else if(mqPC.addListener) mqPC.addListener(onMQ);
+
+  book.addEventListener('scroll',function(){ if(isScroll()) updateBar() },{passive:true});
+
+  /* ---------- ページ送り（スマホ・タブレット縦のみ） ---------- */
   function go(d){
-    var s=step();
-    var ni=i+d*s;
-    if(ni<0) ni=0;
-    if(ni>pages.length-1) return;
-    if(d>0&&(i+s)>=pages.length) return;
-    i=ni; render(d);
+    if(isScroll()) return;
+    var ni=i+d;
+    if(ni<0||ni>pages.length-1) return;
+    i=ni; renderPaged(d);
   }
-
   prev.addEventListener('click',function(){go(-1)});
   next.addEventListener('click',function(){go(1)});
-  if(toggle) toggle.addEventListener('click',function(){spread=!spread;render(0)});
-  mqPC.addEventListener?mqPC.addEventListener('change',function(){render(0)}):mqPC.addListener(function(){render(0)});
+
+  /* ---------- PC（連続スクロール）：前へ／次へでページ頭までジャンプ ---------- */
+  function jump(d){
+    if(!isScroll()){ go(d); return; }
+    var cur=currentByScroll(), target;
+    if(d>0){
+      target=cur+1;
+    }else{
+      var p=pages[cur];
+      var top = p ? (book.scrollTop-(p.offsetTop-14))<24 : true;
+      target = top ? cur-1 : cur;   /* ページ途中なら、まずそのページの頭へ戻す */
+    }
+    target=Math.min(Math.max(target,0),pages.length-1);
+    i=target;
+    scrollToPage(target,true);
+    syncHead();
+  }
+  hprev.addEventListener('click',function(){jump(-1)});
+  hnext.addEventListener('click',function(){jump(1)});
 
   document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'&&fsEl){exitFS();return}
+    if(fsEl||isScroll()) return;
     if(e.key==='ArrowRight'){go(1)}
     else if(e.key==='ArrowLeft'){go(-1)}
   });
 
-  // 横スワイプ（縦スクロールと誤爆しない判定）
+  /* 横スワイプ（縦スクロールと誤爆しない判定） */
   var sx=0,sy=0,st=0;
   book.addEventListener('touchstart',function(e){
     if(e.touches.length!==1)return;
     sx=e.touches[0].clientX;sy=e.touches[0].clientY;st=Date.now();
   },{passive:true});
   book.addEventListener('touchend',function(e){
+    if(fsEl||isScroll())return;
     var t=e.changedTouches[0];
     var dx=t.clientX-sx, dy=t.clientY-sy;
     if(Date.now()-st>700)return;
@@ -569,7 +875,17 @@ a.cta-btn:active{transform:translateY(1px)}
     }
   },{passive:true});
 
-  render(0);
+  var saved='m';
+  try{ saved=localStorage.getItem(FSKEY)||'m' }catch(e){}
+  if(!FSVAL[saved]) saved='m';
+  fsNow=saved;
+  document.documentElement.setAttribute('data-fs',saved);
+  fsBtns.forEach(function(b){
+    b.setAttribute('aria-pressed', b.getAttribute('data-fs')===saved ? 'true':'false');
+  });
+
+  applyMode(true);
+  syncHead();
 })();
 </script>
 </body>
